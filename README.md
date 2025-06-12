@@ -56,6 +56,9 @@ python app.py
 
 The API will be available at `http://localhost:5000`
 
+### 6. Frontend Web UI
+A simple static site is provided in `frontend/`. Open `frontend/index.html` in your browser and update `script.js` with your API key.
+
 ## Docker Deployment
 
 ### Build and Run

@@ -1,0 +1,4 @@
+body { font-family: Arial, sans-serif; margin: 20px; }
+section { margin-bottom: 30px; }
+textarea, input { width: 100%; max-width: 500px; }
+pre { background: #f4f4f4; padding: 10px; }
