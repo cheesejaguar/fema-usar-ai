@@ -115,6 +115,16 @@ Content-Type: application/json
 }
 ```
 
+#### Generate ICS 205 Plan
+```bash
+POST /api/ics205
+Content-Type: application/json
+
+{
+  "incident": "Fire at Main St"
+}
+```
+
 ### Health Check
 ```bash
 GET /api/health
@@ -147,6 +157,7 @@ curl http://localhost:5000/api/health
 ├── routes/               # API route blueprints
 │   ├── documents.py      # Document management
 │   ├── chat.py          # Chat endpoints
+│   ├── ics205.py        # ICS 205 form generation
 │   └── health.py        # Health checks
 ├── services/            # Business logic services
 │   ├── vector_store.py  # Chroma vector database
