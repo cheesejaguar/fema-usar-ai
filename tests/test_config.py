@@ -17,7 +17,7 @@ def reload_config(monkeypatch, **env_vars):
 
 def test_default_model(monkeypatch):
     cfg = reload_config(monkeypatch, DEFAULT_MODEL=None)
-    assert cfg.Config.DEFAULT_MODEL == "gpt-3.5-turbo"
+    assert cfg.Config.DEFAULT_MODEL == "nemo-llama3-8b"
 
 
 def test_environment_override(monkeypatch):
