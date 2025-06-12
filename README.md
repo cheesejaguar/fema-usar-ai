@@ -6,7 +6,7 @@ A Flask API application for serving LLM AI agentic workflows with custom documen
 
 - **Document Processing**: Support for PDF, DOCX, and TXT files
 - **Vector Storage**: Chroma database for document embeddings
-- **LLM Integration**: OpenAI API with streaming support
+- **LLM Integration**: NVIDIA NeMo Agent Toolkit (AIQ)
 - **RAG Pipeline**: Retrieval-augmented generation for context-aware responses
 - **API Security**: API key authentication and rate limiting
 - **Production Ready**: Docker support, logging, error handling
@@ -28,7 +28,7 @@ cp .env.example .env
 ```
 
 Required environment variables:
-- `OPENAI_API_KEY`: Your OpenAI API key
+- `NEMO_API_KEY` or `NGC_API_KEY`: Your NVIDIA NeMo API key
 - `API_KEY`: Your custom API key for authentication
 
 ### 3. Install Dependencies
@@ -127,9 +127,9 @@ curl http://localhost:5000/api/health
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | Required |
+| `NEMO_API_KEY` | NVIDIA NeMo API key | Required |
 | `API_KEY` | Custom API key | Required |
-| `DEFAULT_MODEL` | OpenAI model | gpt-3.5-turbo |
+| `DEFAULT_MODEL` | NeMo model | nemo-llama3-8b |
 | `MAX_TOKENS` | Max response tokens | 1000 |
 | `TEMPERATURE` | LLM temperature | 0.7 |
 | `CHUNK_SIZE` | Document chunk size | 1000 |
@@ -150,7 +150,7 @@ curl http://localhost:5000/api/health
 │   └── health.py        # Health checks
 ├── services/            # Business logic services
 │   ├── vector_store.py  # Chroma vector database
-│   ├── llm_service.py   # OpenAI integration
+│   ├── llm_service.py   # NeMo integration
 │   └── document_processor.py # Document processing
 └── utils/               # Utility functions
     ├── auth.py          # Authentication
@@ -187,7 +187,7 @@ flake8 .
 
 ### Common Issues
 
-1. **OpenAI API Errors**: Check API key and quota
+1. **NeMo API Errors**: Check API key and quota
 2. **File Upload Errors**: Verify file size and format
 3. **Vector Store Issues**: Check Chroma database permissions
 4. **Memory Issues**: Adjust chunk size for large documents

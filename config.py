@@ -10,13 +10,14 @@ class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    NEMO_API_KEY = os.environ.get('NEMO_API_KEY') or os.environ.get('NGC_API_KEY')
     API_KEY = os.environ.get('API_KEY') or 'default-api-key'
 
     # Vector store settings
     CHROMA_PERSIST_DIRECTORY = os.environ.get('CHROMA_PERSIST_DIRECTORY') or './chroma_db'
 
     # LLM settings
-    DEFAULT_MODEL = os.environ.get('DEFAULT_MODEL') or 'gpt-3.5-turbo'
+    DEFAULT_MODEL = os.environ.get('DEFAULT_MODEL') or 'nemo-llama3-8b'
     MAX_TOKENS = int(os.environ.get('MAX_TOKENS', 1000))
     TEMPERATURE = float(os.environ.get('TEMPERATURE', 0.7))
 

@@ -35,7 +35,10 @@ def create_app(config_class=Config):
 
     # Initialize services
     vector_store = VectorStoreService()
-    llm_service = LLMService()
+    llm_service = LLMService(
+        api_key=app.config.get("NEMO_API_KEY"),
+        model=app.config.get("DEFAULT_MODEL"),
+    )
 
     # Store services in app context
     app.vector_store = vector_store
