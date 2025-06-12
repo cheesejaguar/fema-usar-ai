@@ -60,3 +60,21 @@ def test_chat_route(monkeypatch):
 
     resp = client.post("/api/chat", json={"message": "hi"})
     assert resp.status_code == 401
+
+
+def test_ics205_route(monkeypatch):
+    flask_app = make_app(monkeypatch)
+    flask_app.config["API_KEY"] = "token"
+    client = flask_app.test_client()
+
+    incident = "Test"
+    prompt = (
+        f"Prepare an ICS 205 Incident Radio Communications Plan for this incident: {incident}. "
+        "Return the plan as a Markdown table."
+    )
+    resp = client.post("/api/ics205", json={"incident": incident}, headers={"X-API-Key": "token"})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ics205": f"reply:{prompt}"}
+
+    resp = client.post("/api/ics205", json={}, headers={"X-API-Key": "token"})
+    assert resp.status_code == 400
