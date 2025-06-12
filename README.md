@@ -37,7 +37,18 @@ Required environment variables:
 pip install -r requirements.txt
 ```
 
-### 4. Run the Application
+### 4. Prepare RAG Documents
+
+After placing your PDFs, DOCX files, or text documents in the directory
+configured by `UPLOAD_FOLDER` (defaults to `./uploads`). The repository
+includes an empty `uploads/` folder that's ignored by Git so you can store your
+documents there. Build the vector store with:
+
+```bash
+python scripts/setup_rag_documents.py
+```
+
+### 5. Run the Application
 
 ```bash
 python app.py
