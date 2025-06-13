@@ -10,7 +10,11 @@ class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-    NEMO_API_KEY = os.environ.get('NEMO_API_KEY') or os.environ.get('NGC_API_KEY')
+    NEMO_API_KEY = (
+        os.environ.get('NEMO_API_KEY')
+        or os.environ.get('NGC_API_KEY')
+        or os.environ.get('NVIDIA_API_KEY')
+    )
     API_KEY = os.environ.get('API_KEY') or 'default-api-key'
 
     # Vector store settings

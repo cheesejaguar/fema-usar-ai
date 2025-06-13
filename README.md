@@ -28,7 +28,7 @@ cp .env.example .env
 ```
 
 Required environment variables:
-- `NEMO_API_KEY` or `NGC_API_KEY`: Your NVIDIA NeMo API key
+- `NEMO_API_KEY`, `NGC_API_KEY`, or `NVIDIA_API_KEY`: Your NVIDIA NeMo API key
 - `API_KEY`: Your custom API key for authentication
 
 ### 3. Install Dependencies
@@ -55,6 +55,19 @@ python app.py
 ```
 
 The API will be available at `http://localhost:5000`
+
+### 6. Run AIQ Hello World
+
+This project includes a minimal [AIQ toolkit](https://github.com/NVIDIA/NeMo-Agent-Toolkit)
+workflow inspired by NVIDIA's Hello World example. After installing the
+`aiqtoolkit` dependency and setting your `NVIDIA_API_KEY`, execute:
+
+```bash
+aiq run --config_file workflow.yaml --input "List five subspecies of Aardvarks"
+```
+
+The command uses the provided `workflow.yaml` file to run a simple ReAct agent
+with a Wikipedia search tool.
 
 ## Docker Deployment
 
@@ -148,7 +161,7 @@ curl http://localhost:5000/api/health
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NEMO_API_KEY` | NVIDIA NeMo API key | Required |
+| `NEMO_API_KEY` or `NVIDIA_API_KEY` | NVIDIA NeMo API key | Required |
 | `API_KEY` | Custom API key | Required |
 | `DEFAULT_MODEL` | NeMo model | nemo-llama3-8b |
 | `MAX_TOKENS` | Max response tokens | 1000 |

@@ -11,3 +11,4 @@ langchain==0.0.335
 marshmallow==3.20.1
 gunicorn==21.2.0
 redis==5.0.1
+aiqtoolkit==1.1.0
