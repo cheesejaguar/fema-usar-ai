@@ -31,3 +31,11 @@ def test_require_api_key_failure():
     resp = client.get("/protected")
     assert resp.status_code == 401
     assert resp.get_json()["error"] == "Unauthorized"
+
+
+def test_require_api_key_wrong_key():
+    app = create_app()
+    client = app.test_client()
+    resp = client.get("/protected", headers={"X-API-Key": "not-the-secret"})
+    assert resp.status_code == 401
+    assert resp.get_json()["error"] == "Unauthorized"

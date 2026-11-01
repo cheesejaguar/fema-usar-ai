@@ -1,46 +1,42 @@
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import types
-
-# Provide dummy chromadb module before import
-class DummyCollection:
-    def __init__(self):
-        self.add_calls = []
-        self.queries = []
-    def add(self, embeddings, metadatas, ids):
-        self.add_calls.append((embeddings, metadatas, ids))
-    def query(self, query_embeddings, n_results):
-        self.queries.append((query_embeddings, n_results))
-        return {"results": n_results}
-
-class DummyClient:
-    def __init__(self, path):
-        self.path = path
-        self.collection = DummyCollection()
-    def get_or_create_collection(self, name):
-        return self.collection
-
-dummy_chromadb = types.SimpleNamespace(PersistentClient=DummyClient)
-sys.modules.setdefault("chromadb", dummy_chromadb)
-sys.modules.setdefault("chromadb.config", types.ModuleType("chromadb.config"))
-sys.modules["chromadb.config"].Settings = object
-
-import services.vector_store as vector_store
+from services.vector_store import VectorStoreService
 
 
-def test_vector_store_add_and_query(monkeypatch, tmp_path):
-    # Replace chromadb with dummy implementation
-    monkeypatch.setattr(vector_store, "chromadb", dummy_chromadb)
-
-    service = vector_store.VectorStoreService(persist_directory=str(tmp_path))
+def test_vector_store_add_and_query(tmp_path):
+    service = VectorStoreService(persist_directory=str(tmp_path))
     assert service.persist_directory == str(tmp_path)
 
-    embeddings = [[0.1, 0.2]]
-    metas = [{"id": 1}]
-    service.add(embeddings, metas)
-    assert service.collection.add_calls[0][0] == embeddings
+    service.add([[1.0, 0.0], [0.0, 1.0]], [{"source": "a"}, {"source": "b"}])
 
-    result = service.query([0.3, 0.4], n_results=3)
-    assert result == {"results": 3}
-    assert service.collection.queries[0] == ([[0.3, 0.4]], 3)
+    result = service.query([0.9, 0.1], n_results=2)
+    assert [m["source"] for m in result["metadatas"][0]] == ["a", "b"]
+    assert result["distances"][0][0] < result["distances"][0][1]
+
+    result = service.query([0.1, 0.9], n_results=1)
+    assert result["metadatas"] == [[{"source": "b"}]]
+
+
+def test_vector_store_persists_to_directory(tmp_path):
+    VectorStoreService(persist_directory=str(tmp_path)).add([[1.0, 0.0]], [{"source": "a"}])
+
+    reopened = VectorStoreService(persist_directory=str(tmp_path))
+    assert reopened.collection.count() == 1
+    assert reopened.query([1.0, 0.0], n_results=1)["metadatas"] == [[{"source": "a"}]]
+
+
+def test_vector_store_add_twice_keeps_both_batches(tmp_path):
+    service = VectorStoreService(persist_directory=str(tmp_path))
+
+    service.add([[1.0, 0.0]], [{"source": "first"}])
+    service.add([[0.0, 1.0]], [{"source": "second"}])
+
+    assert service.collection.count() == 2
+    assert service.query([0.0, 1.0], n_results=1)["metadatas"] == [[{"source": "second"}]]
+
+
+def test_vector_store_uses_env_directory_by_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_PERSIST_DIRECTORY", str(tmp_path / "env_db"))
+
+    service = VectorStoreService()
+
+    assert service.persist_directory == str(tmp_path / "env_db")
+    assert (tmp_path / "env_db").is_dir()

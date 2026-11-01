@@ -21,8 +21,8 @@ def create_app(config_class=Config):
 
     # Rate limiting
     limiter = Limiter(
-        app,
-        key_func=get_remote_address,
+        get_remote_address,
+        app=app,
         default_limits=["200 per day", "50 per hour"]
     )
 
@@ -34,7 +34,9 @@ def create_app(config_class=Config):
         )
 
     # Initialize services
-    vector_store = VectorStoreService()
+    vector_store = VectorStoreService(
+        persist_directory=app.config.get("CHROMA_PERSIST_DIRECTORY"),
+    )
     llm_service = LLMService(
         api_key=app.config.get("NEMO_API_KEY"),
         model=app.config.get("DEFAULT_MODEL"),
