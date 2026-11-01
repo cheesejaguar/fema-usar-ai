@@ -1,4 +1,5 @@
 import os
+import uuid
 import chromadb
 from chromadb.config import Settings
 
@@ -9,7 +10,7 @@ class VectorStoreService:
         self.collection = self.client.get_or_create_collection("documents")
 
     def add(self, embeddings, metadatas):
-        ids = [str(i) for i in range(len(embeddings))]
+        ids = [str(uuid.uuid4()) for _ in embeddings]
         self.collection.add(embeddings=embeddings, metadatas=metadatas, ids=ids)
 
     def query(self, query_embedding, n_results=5):

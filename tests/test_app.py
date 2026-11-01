@@ -1,70 +1,59 @@
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import pytest
+from flask_limiter import Limiter
 
-import types
-
-# Provide dummy external modules before importing app
-class DummyLimiter:
-    def __init__(self, app, key_func=None, default_limits=None):
-        self.app = app
-
-class DummyLLMService:
-    def __init__(self, api_key=None, model=None):
-        self.api_key = api_key
-        self.model = model
-    def generate(self, msg):
-        return f"reply:{msg}"
-
-class DummyVectorStoreService:
-    def __init__(self, persist_directory=None):
-        self.persist_directory = persist_directory
-
-# Stubs for heavy dependencies
-sys.modules.setdefault("nemollm", types.ModuleType("nemollm"))
-sys.modules["nemollm"].NemoLLM = object
-sys.modules.setdefault("chromadb", types.ModuleType("chromadb"))
-sys.modules["chromadb"].PersistentClient = object
-sys.modules.setdefault("chromadb.config", types.ModuleType("chromadb.config"))
-sys.modules["chromadb.config"].Settings = object
-
-import app as app_module
+from app import create_app
+from config import TestingConfig
+from services.llm_service import LLMService
+from services.vector_store import VectorStoreService
 
 
-def make_app(monkeypatch):
-    monkeypatch.setattr(app_module, "Limiter", DummyLimiter)
-    monkeypatch.setattr("services.llm_service.LLMService", DummyLLMService)
-    monkeypatch.setattr("services.vector_store.VectorStoreService", DummyVectorStoreService)
-    monkeypatch.setattr(app_module, "LLMService", DummyLLMService)
-    monkeypatch.setattr(app_module, "VectorStoreService", DummyVectorStoreService)
-    return app_module.create_app()
+@pytest.fixture
+def flask_app(fake_nemo, tmp_path):
+    class Cfg(TestingConfig):
+        API_KEY = "token"
+        NEMO_API_KEY = "nemo-key"
+        DEFAULT_MODEL = "test-model"
+        CHROMA_PERSIST_DIRECTORY = str(tmp_path / "chroma")
+
+    return create_app(Cfg)
 
 
-def test_create_app(monkeypatch):
-    flask_app = make_app(monkeypatch)
-    assert isinstance(flask_app.llm_service, DummyLLMService)
-    assert isinstance(flask_app.vector_store, DummyVectorStoreService)
-    assert isinstance(flask_app.limiter, DummyLimiter)
+def test_create_app(flask_app, fake_nemo, tmp_path):
+    assert isinstance(flask_app.llm_service, LLMService)
+    assert flask_app.llm_service.model == "test-model"
+    assert fake_nemo.instances[0].api_key == "nemo-key"
+
+    assert isinstance(flask_app.vector_store, VectorStoreService)
+    assert flask_app.vector_store.persist_directory == str(tmp_path / "chroma")
+
+    assert isinstance(flask_app.limiter, Limiter)
 
 
-def test_chat_route(monkeypatch):
-    flask_app = make_app(monkeypatch)
-    flask_app.config["API_KEY"] = "token"
+def test_chat_route(flask_app, fake_nemo):
     client = flask_app.test_client()
 
     resp = client.post("/api/chat", json={"message": "hi"}, headers={"X-API-Key": "token"})
     assert resp.status_code == 200
     assert resp.get_json() == {"response": "reply:hi"}
+    assert fake_nemo.instances[0].calls == [
+        {"model": "test-model", "chat_context": [{"role": "user", "content": "hi"}]}
+    ]
 
     resp = client.post("/api/chat", json={}, headers={"X-API-Key": "token"})
     assert resp.status_code == 400
+    assert resp.get_json() == {"error": "message required"}
 
     resp = client.post("/api/chat", json={"message": "hi"})
     assert resp.status_code == 401
 
+    resp = client.post("/api/chat", json={"message": "hi"}, headers={"X-API-Key": "wrong"})
+    assert resp.status_code == 401
 
-def test_ics205_route(monkeypatch):
-    flask_app = make_app(monkeypatch)
-    flask_app.config["API_KEY"] = "token"
+    # Rejected requests must never reach the LLM.
+    assert len(fake_nemo.instances[0].calls) == 1
+
+
+def test_ics205_route(flask_app, fake_nemo):
     client = flask_app.test_client()
 
     incident = "Test"
@@ -75,6 +64,14 @@ def test_ics205_route(monkeypatch):
     resp = client.post("/api/ics205", json={"incident": incident}, headers={"X-API-Key": "token"})
     assert resp.status_code == 200
     assert resp.get_json() == {"ics205": f"reply:{prompt}"}
+    assert fake_nemo.instances[0].calls == [
+        {"model": "test-model", "chat_context": [{"role": "user", "content": prompt}]}
+    ]
 
     resp = client.post("/api/ics205", json={}, headers={"X-API-Key": "token"})
     assert resp.status_code == 400
+    assert resp.get_json() == {"error": "incident required"}
+
+    resp = client.post("/api/ics205", json={"incident": incident})
+    assert resp.status_code == 401
+    assert len(fake_nemo.instances[0].calls) == 1
